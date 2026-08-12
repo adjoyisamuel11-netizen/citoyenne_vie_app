@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:citoyenne_vie_app/screens/LoginScreen.dart';
+import 'screens/auth/login_screen.dart'; // Import relatif vers login_screen.dart
 
 void main() {
   runApp(const CitoyenneVieApp());

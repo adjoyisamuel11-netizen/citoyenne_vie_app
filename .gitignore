@@ -1,45 +1,68 @@
-# Miscellaneous
-*.class
-*.log
-*.pyc
-*.swp
-.DS_Store
-.atom/
-.build/
-.buildlog/
-.history
-.svn/
-.swiftpm/
-migrate_working_dir/
+# =========================================================
+# Flutter / Dart
+# =========================================================
+.dart_tool/
+.fvm/
+.pub-cache/
+.pub/
+.packages
+build/
+coverage/
 
-# IntelliJ related
+# Flutter générés
+.flutter-plugins
+.flutter-plugins-dependencies
+**/doc/api/
+
+# =========================================================
+# Android
+# =========================================================
+android/app/debug/
+android/app/profile/
+android/app/release/
+android/app/app-release.apk
+
+# Fichiers Flutter Android générés
+**/Flutter/Generated.xcconfig
+**/Flutter/.last_build_id
+
+# =========================================================
+# iOS / macOS
+# =========================================================
+**/Flutter/ephemeral/
+**/Pods/
+
+# =========================================================
+# IDE
+# =========================================================
+.idea/
 *.iml
 *.ipr
 *.iws
-.idea/
 
-# The .vscode folder contains launch configuration and tasks you configure in
-# VS Code which you may wish to be included in version control, so this line
-# is commented out by default.
-#.vscode/
+.vscode/
+# Si tu veux partager les configurations VS Code,
+# supprime la ligne ci-dessus.
 
-# Flutter/Dart/Pub related
-**/doc/api/
-**/ios/Flutter/.last_build_id
-.dart_tool/
-.flutter-plugins-dependencies
-.pub-cache/
-.pub/
-/build/
-/coverage/
+# =========================================================
+# Système
+# =========================================================
+.DS_Store
+Thumbs.db
 
-# Symbolication related
-app.*.symbols
+# =========================================================
+# Sécurité
+# =========================================================
+.env
+.env.*
+!.env.example
 
-# Obfuscation related
-app.*.map.json
+*.keystore
+*.jks
 
-# Android Studio will place build artifacts here
-/android/app/debug
-/android/app/profile
-/android/app/release
+# =========================================================
+# Fichiers temporaires
+# =========================================================
+*.log
+*.tmp
+*.swp
