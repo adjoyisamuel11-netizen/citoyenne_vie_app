@@ -267,6 +267,40 @@ class _GrilleScreenState extends State<GrilleScreen> {
     return double.tryParse(mise.toString()) ?? 0;
   }
 
+  // Vraie soit parce que la prime a le statut 'validee', soit parce qu'aucune
+  // grille active n'existe plus (le backend n'en recrée pas après validation).
+  bool get _estPrimeValidee => _prime?['statut'] == 'validee' || _grilleActive == null;
+
+  Widget _buildMessageFinCotisation() {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(vertical: 36, horizontal: 20),
+      decoration: BoxDecoration(
+        color: AppColors.lightGreen,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: AppColors.primaryGreen, width: 1.5),
+      ),
+      child: Column(
+        children: [
+          const Icon(Icons.verified_rounded, color: AppColors.primaryGreen, size: 56),
+          const SizedBox(height: 14),
+          const Text(
+            "Fin de cotisation, prime validée",
+            textAlign: TextAlign.center,
+            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: AppColors.primaryGreen),
+          ),
+          const SizedBox(height: 8),
+          const Text(
+            "L'objectif de cette prime a été atteint. Le carnet est définitivement clos, "
+            "plus aucune saisie n'est possible sur cette grille.",
+            textAlign: TextAlign.center,
+            style: TextStyle(fontSize: 13, color: AppColors.textDark),
+          ),
+        ],
+      ),
+    );
+  }
+
   // ─────────────────────── UI ───────────────────────
   @override
   Widget build(BuildContext context) {
@@ -301,9 +335,13 @@ class _GrilleScreenState extends State<GrilleScreen> {
               const SizedBox(height: 16),
               _buildProgression(),
               const SizedBox(height: 20),
-              _buildEnTeteGrille(),
-              const SizedBox(height: 12),
-              _buildGrilleCases(),
+              if (_estPrimeValidee) ...[
+                _buildMessageFinCotisation(),
+              ] else ...[
+                _buildEnTeteGrille(),
+                const SizedBox(height: 12),
+                _buildGrilleCases(),
+              ],
               const SizedBox(height: 20),
               _buildTotaux(),
             ],

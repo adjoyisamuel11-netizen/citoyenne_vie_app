@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../core/constants/app_colors.dart';
+import '../../core/network/navigation_service.dart';
 import '../../services/auth_service.dart';
 import '../home/home_screen.dart';
 
@@ -15,6 +16,25 @@ class _LoginScreenState extends State<LoginScreen> {
   final _passwordController = TextEditingController();
   final _authService = AuthService();
   bool _isLoading = false;
+  bool _obscurePassword = true; // 👁️ mot de passe masqué par défaut
+
+  @override
+  void initState() {
+    super.initState();
+    // Si on arrive ici suite à une session expirée (401 intercepté par
+    // ApiClient), on affiche le message une seule fois puis on l'efface.
+    final message = NavigationService.flashMessage;
+    if (message != null) {
+      NavigationService.flashMessage = null;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text(message), backgroundColor: Colors.orange),
+          );
+        }
+      });
+    }
+  }
 
   void _connexion() async {
     if (_emailController.text.isEmpty || _passwordController.text.isEmpty) {
@@ -41,10 +61,6 @@ class _LoginScreenState extends State<LoginScreen> {
         ),
       );
 
-      // 🚀 REDIRECTION VERS LE TABLEAU DE BORD
-      // pushReplacement empêche le retour en arrière avec le bouton "Retour" du téléphone.
-      // HomeScreen n'a pas besoin qu'on lui transmette 'user' : il récupère déjà le prénom
-      // de l'agent en décodant le token JWT stocké par AuthService lors du login.
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(
@@ -71,10 +87,17 @@ class _LoginScreenState extends State<LoginScreen> {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              const Icon(
-                Icons.account_balance_wallet,
-                size: 80,
-                color: AppColors.vertPrincipal,
+              // 🖼️ Logo La Citoyenne Vie (fallback icône si l'image manque)
+              Image.asset(
+                'assets/images/logo.png',
+                height: 110,
+                errorBuilder: (context, error, stackTrace) {
+                  return const Icon(
+                    Icons.account_balance_wallet,
+                    size: 80,
+                    color: AppColors.vertPrincipal,
+                  );
+                },
               ),
               const SizedBox(height: 16),
               const Text(
@@ -96,13 +119,23 @@ class _LoginScreenState extends State<LoginScreen> {
                 ),
               ),
               const SizedBox(height: 16),
+              // 👁️ Champ mot de passe avec bouton afficher/masquer
               TextField(
                 controller: _passwordController,
-                obscureText: true,
-                decoration: const InputDecoration(
+                obscureText: _obscurePassword,
+                decoration: InputDecoration(
                   labelText: 'Mot de passe',
-                  prefixIcon: Icon(Icons.lock),
-                  border: OutlineInputBorder(),
+                  prefixIcon: const Icon(Icons.lock),
+                  border: const OutlineInputBorder(),
+                  suffixIcon: IconButton(
+                    icon: Icon(
+                      _obscurePassword ? Icons.visibility_off : Icons.visibility,
+                      color: Colors.grey,
+                    ),
+                    onPressed: () {
+                      setState(() => _obscurePassword = !_obscurePassword);
+                    },
+                  ),
                 ),
               ),
               const SizedBox(height: 24),

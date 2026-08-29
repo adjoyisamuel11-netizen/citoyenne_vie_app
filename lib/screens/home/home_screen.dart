@@ -3,8 +3,10 @@ import 'package:flutter/material.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/network/api_client.dart';
 import '../../core/utils/storage_service.dart';
+import '../auth/login_screen.dart';
 import '../clients/client_liste_screen.dart';
 import '../stats/stats_detail_screen.dart';
+import '../admin/agents_liste_screen.dart';
 
 /// Écran d'accueil / Tableau de bord principal.
 /// Consomme GET /api/stats/dashboard pour des données réelles.
@@ -21,10 +23,13 @@ class _HomeScreenState extends State<HomeScreen> {
   bool _isLoading = true;
   String? _errorMessage;
   String _prenomAgent = "";
+  String _role = "agent";
 
   Map<String, dynamic> _portefeuille = {};
   Map<String, dynamic> _primes = {};
   Map<String, dynamic> _encaissements = {};
+  Map<String, dynamic>? _agents;
+  bool _visionGlobale = false;
 
   @override
   void initState() {
@@ -37,7 +42,12 @@ class _HomeScreenState extends State<HomeScreen> {
     final token = await StorageService.getToken();
     if (token == null) return;
     final payload = _decodeToken(token);
-    if (mounted) setState(() => _prenomAgent = payload['prenom']?.toString() ?? '');
+    if (mounted) {
+      setState(() {
+        _prenomAgent = payload['prenom']?.toString() ?? '';
+        _role = payload['role']?.toString() ?? 'agent';
+      });
+    }
   }
 
   Map<String, dynamic> _decodeToken(String token) {
@@ -74,6 +84,8 @@ class _HomeScreenState extends State<HomeScreen> {
             _portefeuille = Map<String, dynamic>.from(data['portefeuille'] ?? {});
             _primes = Map<String, dynamic>.from(data['primes'] ?? {});
             _encaissements = Map<String, dynamic>.from(data['encaissements'] ?? {});
+            _visionGlobale = data['vision_globale'] == true;
+            _agents = data['agents'] != null ? Map<String, dynamic>.from(data['agents']) : null;
             _isLoading = false;
           });
         }
@@ -118,8 +130,13 @@ class _HomeScreenState extends State<HomeScreen> {
             style: ElevatedButton.styleFrom(backgroundColor: AppColors.primaryRed, foregroundColor: AppColors.white),
             onPressed: () async {
               await StorageService.clearSession();
-              if (ctx.mounted) Navigator.of(ctx).pop();
-              // TODO: Navigator.pushAndRemoveUntil vers LoginScreen
+              if (ctx.mounted) {
+                Navigator.of(ctx).pop(); // ferme la boîte de dialogue
+                Navigator.of(context).pushAndRemoveUntil(
+                  MaterialPageRoute(builder: (_) => const LoginScreen()),
+                      (route) => false,
+                );
+              }
             },
             child: const Text("Oui, me déconnecter"),
           ),
@@ -205,7 +222,7 @@ class _HomeScreenState extends State<HomeScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  _prenomAgent.isEmpty ? "Bonjour 👋" : "Bonjour, $_prenomAgent 👋",
+                  _prenomAgent.isEmpty ? "Bonjour " : "Bonjour, $_prenomAgent ",
                   style: const TextStyle(color: AppColors.white, fontSize: 22, fontWeight: FontWeight.bold),
                 ),
                 const SizedBox(height: 4),
@@ -248,6 +265,7 @@ class _HomeScreenState extends State<HomeScreen> {
     final montantJour = double.tryParse((_encaissements['aujourd_hui'] ?? 0).toString()) ?? 0;
     final assuresActifs = int.tryParse((_portefeuille['actifs'] ?? 0).toString()) ?? 0;
     final primesEnCours = int.tryParse((_primes['en_cours'] ?? 0).toString()) ?? 0;
+    final agentsActifs = int.tryParse((_agents?['actifs'] ?? 0).toString()) ?? 0;
 
     return GridView.count(
       shrinkWrap: true,
@@ -255,10 +273,10 @@ class _HomeScreenState extends State<HomeScreen> {
       crossAxisCount: isDesktop ? 3 : 2,
       mainAxisSpacing: 14,
       crossAxisSpacing: 14,
-      childAspectRatio: isDesktop ? 1.3 : 1.05,
+      childAspectRatio: isDesktop ? 1.5 : 0.82,
       children: [
         _AnimatedStatCard(
-          title: "Collecté aujourd'hui",
+          title: _visionGlobale ? "Collecté (global)" : "Collecté aujourd'hui",
           value: montantJour,
           suffix: " FCFA",
           isMonetaire: true,
@@ -266,7 +284,7 @@ class _HomeScreenState extends State<HomeScreen> {
           color: AppColors.primaryGreen,
         ),
         _AnimatedStatCard(
-          title: "Assurés actifs",
+          title: _visionGlobale ? "Assurés actifs" : "Assurés actifs",
           value: assuresActifs.toDouble(),
           icon: Icons.people_alt_rounded,
           color: AppColors.info,
@@ -277,6 +295,13 @@ class _HomeScreenState extends State<HomeScreen> {
           icon: Icons.assignment_turned_in_rounded,
           color: AppColors.warning,
         ),
+        if (_visionGlobale)
+          _AnimatedStatCard(
+            title: "Agents actifs",
+            value: agentsActifs.toDouble(),
+            icon: Icons.groups_rounded,
+            color: AppColors.primaryRed,
+          ),
       ],
     );
   }
@@ -331,6 +356,15 @@ class _HomeScreenState extends State<HomeScreen> {
           Navigator.push(context, MaterialPageRoute(builder: (_) => const ClientsListeScreen()));
         },
       ),
+      if (_role == 'admin')
+        _QuickAction(
+          label: "Gestion des Agents",
+          icon: Icons.admin_panel_settings_rounded,
+          color: AppColors.primaryRed,
+          onTap: () {
+            Navigator.push(context, MaterialPageRoute(builder: (_) => const AgentsListeScreen()));
+          },
+        ),
     ];
 
     return GridView.count(
@@ -426,7 +460,7 @@ class _AnimatedStatCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
         color: AppColors.white,
         borderRadius: BorderRadius.circular(16),
@@ -434,14 +468,15 @@ class _AnimatedStatCard extends StatelessWidget {
         boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.04), blurRadius: 8, offset: const Offset(0, 3))],
       ),
       child: Column(
+        mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Container(
-            padding: const EdgeInsets.all(10),
+            padding: const EdgeInsets.all(8),
             decoration: BoxDecoration(color: color.withValues(alpha: 0.12), shape: BoxShape.circle),
-            child: Icon(icon, color: color, size: 22),
+            child: Icon(icon, color: color, size: 20),
           ),
-          const SizedBox(height: 14),
+          const SizedBox(height: 10),
           TweenAnimationBuilder<double>(
             tween: Tween(begin: 0, end: value),
             duration: const Duration(milliseconds: 1100),
@@ -449,12 +484,17 @@ class _AnimatedStatCard extends StatelessWidget {
             builder: (context, animatedValue, child) {
               return Text(
                 _formatValeur(animatedValue),
-                style: const TextStyle(fontSize: 19, fontWeight: FontWeight.bold, color: AppColors.textDark),
+                style: const TextStyle(fontSize: 17, fontWeight: FontWeight.bold, color: AppColors.textDark),
               );
             },
           ),
-          const SizedBox(height: 4),
-          Text(title, style: const TextStyle(fontSize: 12.5, color: AppColors.textGrey, fontWeight: FontWeight.w500)),
+          const SizedBox(height: 3),
+          Text(
+            title,
+            style: const TextStyle(fontSize: 11.5, color: AppColors.textGrey, fontWeight: FontWeight.w500),
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
+          ),
         ],
       ),
     );

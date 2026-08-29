@@ -38,7 +38,8 @@ dependencies:
   url_launcher: ^6.3.1
   shared_preferences: ^2.5.5
   fl_chart: ^0.68.0
-  file_picker: ^8.1.2
+  #file_picker: ^8.1.2
+  file_picker: ^10.3.10
 
 
 dev_dependencies:
@@ -51,6 +52,7 @@ dev_dependencies:
   # package. See that file for information about deactivating specific lint
   # rules and activating additional ones.
   flutter_lints: ^6.0.0
+  flutter_launcher_icons: ^0.13.1
 
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec
@@ -92,3 +94,8 @@ flutter:
   #
   # For details regarding fonts from package dependencies,
   # see https://flutter.dev/to/font-from-package
+
+flutter_launcher_icons:
+  android: true
+  ios: true
+  image_path: "assets/images/icon.png"

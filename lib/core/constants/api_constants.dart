@@ -1,18 +1,23 @@
 import 'package:flutter/foundation.dart';
 
 class ApiConstants {
-  // ⚡ URL dynamique : détecte automatiquement si vous êtes sur Chrome/Web ou Téléphone/Émulateur
-  static String get baseUrl {
-    if (kIsWeb) {
-      // Si l'application tourne dans Chrome (Navigateur Web)
-      return 'http://localhost:3000/api';
-    } else {
-      // Si l'application tourne sur Émulateur Android
-      return 'http://10.0.2.2:3000/api';
+  /// URL de base configurable au lancement, SANS toucher au code.
+  ///   flutter run --dart-define=API_BASE_URL=http://192.168.1.42:3000/api
+  static const String _override = String.fromEnvironment('API_BASE_URL');
 
-      // 💡 Astuce : Si vous branchez votre VRAI téléphone en Wi-Fi / USB plus tard,
-      // il suffira de remplacer '10.0.2.2' par l'IP de votre PC (ex: 'http://192.168.1.XX:3000/api')
+  // 🌐 Une fois l'API déployée (Render, etc.), mets l'URL publique ici : ça
+  // devient le comportement par défaut, plus besoin de réseau local du tout.
+  static const String _productionUrl = ''; //'https://citoyenne-vie-api.onrender.com/api' <-- URL de prod ici quand prête
+
+  static String get baseUrl {
+    if (_override.isNotEmpty) return _override;
+    if (_productionUrl.isNotEmpty) return _productionUrl;
+    if (kIsWeb) {
+      return 'http://localhost:3000/api';
     }
+    // Par défaut : suppose un émulateur Android. Sur un vrai téléphone,
+    // lancer avec --dart-define=API_BASE_URL=http://TON_IP_LOCALE:3000/api
+    return 'http://10.0.2.2:3000/api';
   }
 
   // Routes Authentification
@@ -34,4 +39,13 @@ class ApiConstants {
   // Routes Paiements / Encaissements
   static String get encaisser => '$baseUrl/paiements/encaisser';
   static String historiqueGrille(int grilleId) => '$baseUrl/paiements/grille/$grilleId';
+
+  // Routes Statistiques
+  static String get statsDashboard => '$baseUrl/stats/dashboard';
+  static String statsExport(String format) => '$baseUrl/stats/export?format=$format';
+
+  // Routes Admin (gestion des agents) — réservées au rôle admin
+  static String get adminAgents => '$baseUrl/admin/agents';
+  static String adminAgentDetails(int agentId) => '$baseUrl/admin/agents/$agentId';
+  static String adminAgentStatut(int agentId) => '$baseUrl/admin/agents/$agentId/statut';
 }

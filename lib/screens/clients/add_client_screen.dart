@@ -118,6 +118,19 @@ class _AddClientScreenState extends State<AddClientScreen> {
     }
   }
 
+  // 📱 Format togolais : 8 chiffres commençant par 7 ou 9, avec +228/00228 optionnel.
+  // Même règle que côté backend (défense en profondeur : on bloque déjà côté saisie).
+  static final RegExp _togoPhoneRegex = RegExp(r'^(\+228|00228)?[79]\d{7}$');
+
+  String? _validerTelephoneTogolais(String? value) {
+    if (value == null || value.trim().isEmpty) return "Champ obligatoire";
+    final normalise = value.replaceAll(RegExp(r'[\s.-]'), '');
+    if (!_togoPhoneRegex.hasMatch(normalise)) {
+      return "Numéro invalide (ex: 90 12 34 56, format togolais requis)";
+    }
+    return null;
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -167,8 +180,9 @@ class _AddClientScreenState extends State<AddClientScreen> {
                   labelText: "Téléphone *",
                   border: OutlineInputBorder(),
                   prefixIcon: Icon(Icons.phone, color: AppColors.primaryGreen),
+                  hintText: "ex: 90 12 34 56",
                 ),
-                validator: (v) => (v == null || v.trim().isEmpty) ? "Champ obligatoire" : null,
+                validator: _validerTelephoneTogolais,
               ),
               const SizedBox(height: 16),
 
